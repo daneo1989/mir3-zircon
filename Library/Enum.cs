@@ -163,6 +163,10 @@ namespace Library
         WeaponCraftPurple,
         WeaponCraftGreen,
         WeaponCraftGrey,
+        RefineCorundumOre,
+        AccessoryRefineCombTarget,
+        AccessoryRefineCombItems,
+        PartsStorage,
     }
 
     public enum BuffType
@@ -428,6 +432,7 @@ namespace Library
         AccessoryRefineLevel,
         AccessoryReset,
         WeaponCraft,
+        AccessoryRefine,
     }
 
     public enum MagicSchool

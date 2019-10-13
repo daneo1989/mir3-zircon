@@ -126,7 +126,8 @@ namespace Server.Models
 
         public UserItem[] Inventory = new UserItem[Globals.InventorySize],
             Equipment = new UserItem[Globals.EquipmentSize],
-            Storage = new UserItem[1000];
+            Storage = new UserItem[1000],
+            PartsStorage = new UserItem[1000];
 
         public Companion Companion;
 
@@ -161,7 +162,12 @@ namespace Server.Models
             Character.LastStats = Stats = new Stats();
 
             foreach (UserItem item in Character.Account.Items)
-                Storage[item.Slot] = item;
+                if(item.Slot >= 2000)
+                {
+                    PartsStorage[item.Slot - Globals.PartsStorageOffset] = item;
+                }
+                else
+                    Storage[item.Slot] = item;
 
             foreach (UserItem item in Character.Items)
             {
@@ -698,6 +704,7 @@ namespace Server.Models
                     Dead = true;
                     TownRevive();
                 }
+                Enqueue(new S.InformMaxExperience { MaxExperience = MaxExperience });
             }
 
             if (Character.Account.GuildMember != null)
@@ -1103,6 +1110,7 @@ namespace Server.Models
 
             Inventory = null;
             Equipment = null;
+            PartsStorage = null;
             Storage = null;
 
             Companion = null;
@@ -2309,7 +2317,7 @@ namespace Server.Models
             SetHP(Stats[Stat.Health]);
             SetMP(Stats[Stat.Mana]);
 
-            Enqueue(new S.LevelChanged { Level = Level, Experience = Experience });
+            Enqueue(new S.LevelChanged { Level = Level, Experience = Experience, MaxExperience = MaxExperience });
             Broadcast(new S.ObjectLeveled { ObjectID = ObjectID });
 
             SEnvir.RankingSort(Character);
@@ -3755,6 +3763,9 @@ namespace Server.Models
                         }
                         fromArray = Inventory;
                         break;
+                    case GridType.PartsStorage:
+                        fromArray = PartsStorage;
+                        break;
                     case GridType.Storage:
                         fromArray = Storage;
                         break;
@@ -3811,6 +3822,9 @@ namespace Server.Models
                 {
                     case GridType.Inventory:
                         fromArray = Inventory;
+                        break;
+                    case GridType.PartsStorage:
+                        fromArray = PartsStorage;
                         break;
                     case GridType.Storage:
                         fromArray = Storage;
@@ -3881,6 +3895,9 @@ namespace Server.Models
                         Connection.ReceiveChat(Connection.Language.ConsignSafeZone, MessageType.System);
                         return;
                     }
+                    break;
+                case GridType.PartsStorage:
+                    array = PartsStorage;
                     break;
                 case GridType.Storage:
                     array = Storage;
@@ -5535,6 +5552,9 @@ namespace Server.Models
                 case GridType.Inventory:
                     fromArray = Inventory;
                     break;
+                case GridType.PartsStorage:
+                    fromArray = PartsStorage;
+                    break;
                 case GridType.CompanionInventory:
                     if (Companion == null) return;
 
@@ -6638,6 +6658,18 @@ namespace Server.Models
                 case GridType.Equipment:
                     fromArray = Equipment;
                     break;
+                case GridType.PartsStorage:
+                    if (!InSafeZone && !Character.Account.TempAdmin)
+                    {
+                        Connection.ReceiveChat(Connection.Language.StorageSafeZone, MessageType.System);
+
+                        foreach (SConnection con in Connection.Observers)
+                            con.ReceiveChat(con.Language.StorageSafeZone, MessageType.System);
+                        return;
+                    }
+
+                    fromArray = PartsStorage;
+                    break;
                 case GridType.Storage:
                     if (!InSafeZone && !Character.Account.TempAdmin)
                     {
@@ -6661,7 +6693,7 @@ namespace Server.Models
                         return;
                     }
 
-                    if (!InSafeZone && p.ToGrid != GridType.Storage)
+                    if (!InSafeZone && (p.ToGrid != GridType.Storage || p.ToGrid != GridType.PartsStorage))
                     {
                         Connection.ReceiveChat(Connection.Language.GuildStorageSafeZone, MessageType.System);
                         return;
@@ -6701,6 +6733,20 @@ namespace Server.Models
                     break;
                 case GridType.Equipment:
                     toArray = Equipment;
+                    break;
+                case GridType.PartsStorage:
+
+                    if (!InSafeZone && !Character.Account.TempAdmin)
+                    {
+                        Connection.ReceiveChat(Connection.Language.StorageSafeZone, MessageType.System);
+
+                        foreach (SConnection con in Connection.Observers)
+                            con.ReceiveChat(con.Language.StorageSafeZone, MessageType.System);
+                        return;
+                    }
+
+                    toArray = PartsStorage;
+                    
                     break;
                 case GridType.Storage:
 
@@ -7007,6 +7053,12 @@ namespace Server.Models
                     sendCompanionShape = true;
                     if (toItem == null) break;
                     throw new Exception("Shitty Move Item Logic");
+                case GridType.PartsStorage:
+                    if (toItem == null) break;
+
+                    toItem.Slot = p.FromSlot;
+                    toItem.Account = Character.Account;
+                    break;
                 case GridType.Storage:
                     if (toItem == null) break;
 
@@ -7087,6 +7139,10 @@ namespace Server.Models
                     sendCompanionShape = true;
                     fromItem.Slot = p.ToSlot + Globals.EquipmentOffSet;
                     fromItem.Companion = Companion.UserCompanion;
+                    break;
+                case GridType.PartsStorage:
+                    fromItem.Slot = p.ToSlot + Globals.PartsStorageOffset;
+                    fromItem.Account = Character.Account;
                     break;
                 case GridType.Storage:
                     fromItem.Slot = p.ToSlot;
@@ -7231,6 +7287,9 @@ namespace Server.Models
                 case GridType.Equipment:
                     itemArray = Equipment;
                     break;
+                case GridType.PartsStorage:
+                    itemArray = PartsStorage;
+                    break;
                 case GridType.Storage:
                     itemArray = Storage;
                     break;
@@ -7291,6 +7350,9 @@ namespace Server.Models
                 case GridType.Inventory:
                     array = Inventory;
                     break;
+                case GridType.PartsStorage:
+                    array = PartsStorage;
+                    break;
                 case GridType.Storage:
                     array = Storage;
                     break;
@@ -7345,6 +7407,9 @@ namespace Server.Models
                 {
                     case GridType.Inventory:
                         newItem.Character = Character;
+                        break;
+                    case GridType.PartsStorage:
+                        newItem.Account = Character.Account;
                         break;
                     case GridType.Storage:
                         newItem.Account = Character.Account;
@@ -8677,6 +8742,19 @@ namespace Server.Models
 
                     fromArray = Companion.Inventory;
                     break;
+                case GridType.PartsStorage:
+                    if (!InSafeZone && !Character.Account.TempAdmin)
+                    {
+                        Connection.ReceiveChat(Connection.Language.StorageSafeZone, MessageType.System);
+
+                        foreach (SConnection con in Connection.Observers)
+                            con.ReceiveChat(con.Language.StorageSafeZone, MessageType.System);
+
+                        return;
+                    }
+
+                    fromArray = PartsStorage;
+                    break;
                 case GridType.Storage:
                     if (!InSafeZone && !Character.Account.TempAdmin)
                     {
@@ -8823,6 +8901,9 @@ namespace Server.Models
                     case GridType.Equipment:
                         fromArray = Equipment;
                         break;
+                    case GridType.PartsStorage:
+                        fromArray = PartsStorage;
+                        break;
                     case GridType.Storage:
                         fromArray = Storage;
                         break;
@@ -8918,6 +8999,9 @@ namespace Server.Models
                         break;
                     case GridType.Equipment:
                         fromArray = TradePartner.Equipment;
+                        break;
+                    case GridType.PartsStorage:
+                        fromArray = TradePartner.PartsStorage;
                         break;
                     case GridType.Storage:
                         fromArray = TradePartner.Storage;
@@ -9030,6 +9114,9 @@ namespace Server.Models
                     case GridType.Equipment:
                         fromArray = Equipment;
                         break;
+                    case GridType.PartsStorage:
+                        fromArray = PartsStorage;
+                        break;
                     case GridType.Storage:
                         fromArray = Storage;
                         break;
@@ -9068,6 +9155,9 @@ namespace Server.Models
                         break;
                     case GridType.Equipment:
                         fromArray = TradePartner.Equipment;
+                        break;
+                    case GridType.PartsStorage:
+                        fromArray = TradePartner.PartsStorage;
                         break;
                     case GridType.Storage:
                         fromArray = TradePartner.Storage;
@@ -10993,7 +11083,7 @@ namespace Server.Models
             Level = 1;
             Experience = Experience / 200;
 
-            Enqueue(new S.LevelChanged { Level = Level, Experience = Experience });
+            Enqueue(new S.LevelChanged { Level = Level, Experience = Experience, MaxExperience = MaxExperience });
             Broadcast(new S.ObjectLeveled { ObjectID = ObjectID });
 
             Character.Rebirth++;
@@ -19196,6 +19286,342 @@ namespace Server.Models
 
             Broadcast(p);
         }
+        public void NPCAccessoryRefine(C.NPCAccessoryRefine p)
+        {
+            Enqueue(new S.NPCAccessoryRefine { Target = p.Target, OreTarget = p.OreTarget, Links = p.Links });
+
+            if (Dead || NPC == null || NPCPage == null || NPCPage.DialogType != NPCDialogType.AccessoryRefine) return;
+
+            if (!ParseLinks(p.Target)) return;
+
+            if (Gold < 50000) return;
+
+            UserItem[] targetArray = null;
+
+            switch (p.Target.GridType)
+            {
+                case GridType.Inventory:
+                    targetArray = Inventory;
+                    break;
+                case GridType.Equipment:
+                    targetArray = Equipment;
+                    break;
+                case GridType.Storage:
+                    targetArray = Storage;
+                    break;
+                case GridType.CompanionInventory:
+                    if (Companion == null) return;
+
+                    targetArray = Companion.Inventory;
+                    break;
+                default:
+                    return;
+            }
+
+            if (p.Target.Slot < 0 || p.Target.Slot >= targetArray.Length) return;
+            UserItem targetItem = targetArray[p.Target.Slot];
+
+            if (targetItem == null || p.Target.Count > targetItem.Count) return; //Already Leveled.
+            if ((targetItem.Flags & UserItemFlags.NonRefinable) == UserItemFlags.NonRefinable) return;
+            if (targetItem.Level > 1) return; //No refine on levelled items
+
+            switch (targetItem.Info.ItemType)
+            {
+                case ItemType.Ring:
+                case ItemType.Bracelet:
+                case ItemType.Necklace:
+                    break;
+                default: return; //only refined accessories
+            }
+
+            UserItem[] targetOreArray = null;
+
+            switch (p.OreTarget.GridType)
+            {
+                case GridType.Inventory:
+                    targetOreArray = Inventory;
+                    break;
+                case GridType.Equipment:
+                    targetOreArray = Equipment;
+                    break;
+                case GridType.Storage:
+                    targetOreArray = Storage;
+                    break;
+                case GridType.CompanionInventory:
+                    if (Companion == null) return;
+
+                    targetOreArray = Companion.Inventory;
+                    break;
+                default:
+                    return;
+            }
+            if (p.OreTarget.Slot < 0 || p.OreTarget.Slot >= targetArray.Length) return;
+            UserItem oretargetItem = targetOreArray[p.OreTarget.Slot];
+
+            S.ItemsChanged result = new S.ItemsChanged { Links = new List<CellLinkInfo>(), Success = true };
+            Enqueue(result);
+
+            foreach (CellLinkInfo link in p.Links) //loop through to check level and added stats on each material vs target
+            {
+                UserItem[] fromArray = null;
+
+                switch (link.GridType)
+                {
+                    case GridType.Inventory:
+                        fromArray = Inventory;
+                        break;
+                    case GridType.Storage:
+                        fromArray = Storage;
+                        break;
+                    case GridType.CompanionInventory:
+                        if (Companion == null) continue;
+
+                        fromArray = Companion.Inventory;
+                        break;
+                    default:
+                        continue;
+                }
+
+                if (link.Slot < 0 || link.Slot >= fromArray.Length) continue;
+                UserItem refItem = fromArray[link.Slot];
+
+                if (refItem.Level > 1) return; //if material is levelled dont refine
+                if (targetItem.AddedStats.Count != refItem.AddedStats.Count) return; //if material has different amount of added stats to target dont refine
+
+                if (targetItem.AddedStats.Count > 1) //if target has added stats loop through to check material has same stats
+                {
+                    int count = 0;
+                    foreach (UserItemStat addStat in targetItem.AddedStats)
+                    {
+                        foreach (UserItemStat raddStat in refItem.AddedStats)
+                        {
+                            if (addStat.Stat == raddStat.Stat && addStat.StatSource == raddStat.StatSource && addStat.Amount == raddStat.Amount)
+                            {
+                                count++;
+                            }
+                        }
+                    }
+                    if (count != targetItem.AddedStats.Count) return;
+
+                }
+
+            }
+
+            foreach (CellLinkInfo link in p.Links) //now loop through to remove materials
+            {
+
+                UserItem[] fromArray = null;
+
+                switch (link.GridType)
+                {
+                    case GridType.Inventory:
+                        fromArray = Inventory;
+                        break;
+                    case GridType.Storage:
+                        fromArray = Storage;
+                        break;
+                    case GridType.CompanionInventory:
+                        if (Companion == null) continue;
+
+                        fromArray = Companion.Inventory;
+                        break;
+                    default:
+                        continue;
+                }
+
+                if (link.Slot < 0 || link.Slot >= fromArray.Length) continue;
+                UserItem item = fromArray[link.Slot];
+
+                if (item == null || link.Count > item.Count || (item.Flags & UserItemFlags.Locked) == UserItemFlags.Locked) continue;
+                if ((item.Flags & UserItemFlags.Marriage) == UserItemFlags.Marriage) continue;
+                if ((item.Flags & UserItemFlags.NonRefinable) == UserItemFlags.NonRefinable) continue;
+                if (item.Info != targetItem.Info) continue;
+                if ((item.Flags & UserItemFlags.Bound) == UserItemFlags.Bound && (targetItem.Flags & UserItemFlags.Bound) != UserItemFlags.Bound) continue;
+
+                result.Links.Add(link);
+
+                if (item.Count == link.Count)
+                {
+                    RemoveItem(item);
+                    fromArray[link.Slot] = null;
+                    item.Delete();
+                }
+                else
+                    item.Count -= link.Count;
+
+            }
+
+            int chance = 100 - (oretargetItem.CurrentDurability / 1000);
+            int success = 30;
+            if (targetItem.Info.Rarity != Rarity.Common)
+            {
+                success = 40;
+            }
+            if (SEnvir.Random.Next(chance) < success)
+            #region refineworked
+            {
+
+                S.ItemAcessoryRefined presult = new S.ItemAcessoryRefined { GridType = p.Target.GridType, Slot = p.Target.Slot, NewStats = new Stats() };
+                Enqueue(presult);
+                int amount = 1;
+                if (SEnvir.Random.Next(chance) == 0)
+                {
+                    amount = 2;
+                }
+                switch (p.RefineType)
+                {
+
+                    case RefineType.DC:
+                        targetItem.AddStat(Stat.MaxDC, amount, StatSource.Added);
+                        presult.NewStats[Stat.MaxDC] = amount;
+                        break;
+                    case RefineType.SpellPower:
+                        if (targetItem.Info.Stats[Stat.MinMC] == 0 && targetItem.Info.Stats[Stat.MaxMC] == 0 && targetItem.Info.Stats[Stat.MinSC] == 0 && targetItem.Info.Stats[Stat.MaxSC] == 0)
+                        {
+                            targetItem.AddStat(Stat.MaxMC, amount, StatSource.Added);
+                            presult.NewStats[Stat.MaxMC] = amount;
+
+                            targetItem.AddStat(Stat.MaxSC, amount, StatSource.Added);
+                            presult.NewStats[Stat.MaxSC] = amount;
+                        }
+
+                        if (targetItem.Info.Stats[Stat.MinMC] > 0 || targetItem.Info.Stats[Stat.MaxMC] > 0)
+                        {
+                            targetItem.AddStat(Stat.MaxMC, amount, StatSource.Added);
+                            presult.NewStats[Stat.MaxMC] = amount;
+                        }
+
+                        if (targetItem.Info.Stats[Stat.MinSC] > 0 || targetItem.Info.Stats[Stat.MaxSC] > 0)
+                        {
+                            targetItem.AddStat(Stat.MaxSC, amount, StatSource.Added);
+                            presult.NewStats[Stat.MaxSC] = amount;
+                        }
+                        break;
+                    case RefineType.Health:
+                        amount *= 10;
+                        targetItem.AddStat(Stat.Health, amount, StatSource.Added);
+                        presult.NewStats[Stat.Health] = amount;
+                        break;
+                    case RefineType.Mana:
+                        amount *= 10;
+                        targetItem.AddStat(Stat.Mana, amount, StatSource.Added);
+                        presult.NewStats[Stat.Mana] = amount;
+                        break;
+                    case RefineType.DCPercent:
+                        targetItem.AddStat(Stat.DCPercent, amount, StatSource.Added);
+                        presult.NewStats[Stat.DCPercent] = amount;
+                        break;
+                    case RefineType.SPPercent:
+                        if (targetItem.Info.Stats[Stat.MinMC] == 0 && targetItem.Info.Stats[Stat.MaxMC] == 0 && targetItem.Info.Stats[Stat.MinSC] == 0 && targetItem.Info.Stats[Stat.MaxSC] == 0)
+                        {
+                            targetItem.AddStat(Stat.MCPercent, amount, StatSource.Added);
+                            presult.NewStats[Stat.MCPercent] = amount;
+
+                            targetItem.AddStat(Stat.SCPercent, amount, StatSource.Added);
+                            presult.NewStats[Stat.SCPercent] = amount;
+                        }
+
+                        if (targetItem.Info.Stats[Stat.MinMC] > 0 || targetItem.Info.Stats[Stat.MaxMC] > 0)
+                        {
+                            targetItem.AddStat(Stat.MCPercent, amount, StatSource.Added);
+                            presult.NewStats[Stat.MCPercent] = amount;
+                        }
+
+                        if (targetItem.Info.Stats[Stat.MinSC] > 0 || targetItem.Info.Stats[Stat.MaxSC] > 0)
+                        {
+                            targetItem.AddStat(Stat.SCPercent, amount, StatSource.Added);
+                            presult.NewStats[Stat.SCPercent] = amount;
+                        }
+                        break;
+                    case RefineType.HealthPercent:
+                        targetItem.AddStat(Stat.HealthPercent, amount, StatSource.Added);
+                        presult.NewStats[Stat.HealthPercent] = amount;
+                        break;
+                    case RefineType.ManaPercent:
+                        targetItem.AddStat(Stat.ManaPercent, amount, StatSource.Added);
+                        presult.NewStats[Stat.ManaPercent] = amount;
+                        break;
+                    case RefineType.Fire:
+                        targetItem.AddStat(Stat.FireAttack, amount, StatSource.Added);
+                        presult.NewStats[Stat.FireAttack] = amount;
+                        break;
+                    case RefineType.Ice:
+                        targetItem.AddStat(Stat.IceAttack, amount, StatSource.Added);
+                        presult.NewStats[Stat.IceAttack] = amount;
+                        break;
+                    case RefineType.Lightning:
+                        targetItem.AddStat(Stat.LightningAttack, amount, StatSource.Added);
+                        presult.NewStats[Stat.LightningAttack] = amount;
+                        break;
+                    case RefineType.Wind:
+                        targetItem.AddStat(Stat.WindAttack, amount, StatSource.Added);
+                        presult.NewStats[Stat.WindAttack] = amount;
+                        break;
+                    case RefineType.Holy:
+                        targetItem.AddStat(Stat.HolyAttack, amount, StatSource.Added);
+                        presult.NewStats[Stat.HolyAttack] = amount;
+                        break;
+                    case RefineType.Dark:
+                        targetItem.AddStat(Stat.DarkAttack, amount, StatSource.Added);
+                        presult.NewStats[Stat.DarkAttack] = amount;
+                        break;
+                    case RefineType.Phantom:
+                        targetItem.AddStat(Stat.PhantomAttack, amount, StatSource.Added);
+                        presult.NewStats[Stat.PhantomAttack] = amount;
+                        break;
+                    case RefineType.AC:
+                        targetItem.AddStat(Stat.MaxAC, amount, StatSource.Added);
+                        presult.NewStats[Stat.MaxAC] = amount;
+                        break;
+                    case RefineType.MR:
+                        targetItem.AddStat(Stat.MaxMR, amount, StatSource.Added);
+                        presult.NewStats[Stat.MaxMR] = amount;
+                        break;
+                    case RefineType.Accuracy:
+                        targetItem.AddStat(Stat.Accuracy, amount, StatSource.Added);
+                        presult.NewStats[Stat.Accuracy] = amount;
+                        break;
+                    case RefineType.Agility:
+                        targetItem.AddStat(Stat.Agility, amount, StatSource.Added);
+                        presult.NewStats[Stat.Agility] = amount;
+                        break;
+                    default:
+                        Character.Account.Banned = true;
+                        Character.Account.BanReason = "Attempted to Exploit refine, Accessory Refine Type.";
+                        Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
+                        return;
+                }
+                targetItem.StatsChanged();
+                Connection.ReceiveChat(string.Format(Connection.Language.AccessoryRefineSuccess, targetItem.Info.ItemName, p.RefineType, amount), MessageType.System);
+
+                foreach (SConnection con in Connection.Observers)
+                    con.ReceiveChat(string.Format(con.Language.AccessoryRefineSuccess, targetItem.Info.ItemName, p.RefineType, amount), MessageType.System);
+                RefreshStats();
+            }
+            #endregion
+            else
+            {
+                Connection.ReceiveChat(string.Format(Connection.Language.AccessoryRefineFailed, targetItem.Info.ItemName), MessageType.System);
+
+                foreach (SConnection con in Connection.Observers)
+                    con.ReceiveChat(string.Format(con.Language.AccessoryRefineFailed, targetItem.Info.ItemName), MessageType.System);
+                targetArray[targetItem.Slot] = null;
+                result.Links.Add(p.Target);
+                RemoveItem(targetItem);
+                targetItem.Delete();
+
+            }
+
+            Gold -= 50000;
+            GoldChanged();
+            targetOreArray[oretargetItem.Slot] = null;
+            result.Links.Add(p.OreTarget);
+            RemoveItem(oretargetItem);
+            oretargetItem.Delete();
+            Companion?.RefreshWeight();
+            RefreshStats();
+        }
+
 
 
     }

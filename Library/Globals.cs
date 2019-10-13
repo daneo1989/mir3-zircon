@@ -380,6 +380,7 @@ namespace Library
                          EquipmentSize = 16,
                          CompanionInventorySize = 40,
                          CompanionEquipmentSize = 4,
+                         PartsStorageOffset = 2000,
                          EquipmentOffSet = 1000,
                          StorageSize = 100;
 
@@ -918,6 +919,7 @@ namespace Library
         public MirClass Class { get; set; }
         public int Level { get; set; }
         public decimal Experience { get; set; }
+        public decimal MaxExperience { get; set; }
         public bool Online { get; set; }
         public bool Observable { get; set; }
     }

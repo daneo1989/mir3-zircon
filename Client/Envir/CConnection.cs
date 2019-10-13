@@ -63,6 +63,7 @@ namespace Client.Envir
             }
 
             CEnvir.Storage = null;
+            CEnvir.PartsStorage = null;
         }
         public override void TrySendDisconnect(Packet p)
         {
@@ -598,6 +599,7 @@ namespace Client.Envir
             };
 
             CEnvir.Storage = CEnvir.MainStorage;
+            CEnvir.PartsStorage = CEnvir.MainPartsStorage;
 
             scene.SelectBox.UpdateCharacters();
         }
@@ -1557,10 +1559,15 @@ namespace Client.Envir
                 return;
             }
         }
+        public void Process(S.InformMaxExperience p)
+        {
+            MapObject.User.MaxExperience = p.MaxExperience;
+        } 
         public void Process(S.LevelChanged p)
         {
             MapObject.User.Level = p.Level;
             MapObject.User.Experience = p.Experience;
+            MapObject.User.MaxExperience = p.MaxExperience;
 
             GameScene.Game.ReceiveChat("Level Increased", MessageType.System);
         }
@@ -1675,8 +1682,11 @@ namespace Client.Envir
                 case GridType.Equipment:
                     fromCell = GameScene.Game.CharacterBox.Grid[p.FromSlot];
                     break;
-              case GridType.Storage:
+                case GridType.Storage:
                     fromCell = GameScene.Game.StorageBox.Grid.Grid[p.FromSlot];
+                    break;
+                case GridType.PartsStorage:
+                    fromCell = GameScene.Game.StorageBox.PartGrid.Grid[p.FromSlot];
                     break;
                 case GridType.GuildStorage:
                     fromCell = GameScene.Game.GuildBox.StorageGrid.Grid[p.FromSlot];
@@ -1700,6 +1710,9 @@ namespace Client.Envir
                     break;
                 case GridType.Storage:
                     toCell = GameScene.Game.StorageBox.Grid.Grid[p.ToSlot];
+                    break;
+                case GridType.PartsStorage:
+                    toCell = GameScene.Game.StorageBox.PartGrid.Grid[p.ToSlot];
                     break;
                 case GridType.GuildStorage:
                     toCell = GameScene.Game.GuildBox.StorageGrid.Grid[p.ToSlot];
@@ -1824,6 +1837,9 @@ namespace Client.Envir
                 case GridType.Storage:
                     grid = GameScene.Game.StorageBox.Grid.Grid;
                     break;
+                case GridType.PartsStorage:
+                    grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                    break;
                 case GridType.GuildStorage:
                     grid = GameScene.Game.GuildBox.StorageGrid.Grid;
                     break;
@@ -1887,6 +1903,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                         break;
@@ -1946,6 +1965,9 @@ namespace Client.Envir
                 case GridType.Storage:
                     grid = GameScene.Game.StorageBox.Grid.Grid;
                     break;
+                case GridType.PartsStorage:
+                    grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                    break;
                 case GridType.CompanionInventory:
                     grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                     break;
@@ -1997,6 +2019,9 @@ namespace Client.Envir
                 case GridType.Storage:
                     grid = GameScene.Game.StorageBox.Grid.Grid;
                     break;
+                case GridType.PartsStorage:
+                    grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                    break;
                 case GridType.CompanionInventory:
                     grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                     break;
@@ -2026,6 +2051,9 @@ namespace Client.Envir
                     break;
                 case GridType.Storage:
                     grid = GameScene.Game.StorageBox.Grid.Grid;
+                    break;
+                case GridType.PartsStorage:
+                    grid = GameScene.Game.StorageBox.PartGrid.Grid;
                     break;
                 case GridType.CompanionInventory:
                     grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -2072,6 +2100,9 @@ namespace Client.Envir
                 case GridType.Storage:
                     fromCell = GameScene.Game.StorageBox.Grid.Grid[p.Slot];
                     break;
+                case GridType.PartsStorage:
+                    fromCell = GameScene.Game.StorageBox.PartGrid.Grid[p.Slot];
+                    break;
                 case GridType.GuildStorage:
                     fromCell = GameScene.Game.GuildBox.StorageGrid.Grid[p.Slot];
                     break;
@@ -2096,6 +2127,9 @@ namespace Client.Envir
                     break;
                 case GridType.Storage:
                     toCell = GameScene.Game.StorageBox.Grid.Grid[p.NewSlot];
+                    break;
+                case GridType.PartsStorage:
+                    toCell = GameScene.Game.StorageBox.PartGrid.Grid[p.NewSlot];
                     break;
                 case GridType.GuildStorage:
                     toCell = GameScene.Game.GuildBox.StorageGrid.Grid[p.NewSlot];
@@ -2139,6 +2173,9 @@ namespace Client.Envir
                 case GridType.Storage:
                     cell = GameScene.Game.StorageBox.Grid.Grid[p.Slot];
                     break;
+                case GridType.PartsStorage:
+                    cell = GameScene.Game.StorageBox.PartGrid.Grid[p.Slot];
+                    break;
                 /*    case GridType.GuildStorage:
                       fromCell = GameScene.Game.GuildPanel.StorageControl.Grid[p.FromSlot];
                       break;*/
@@ -2174,6 +2211,9 @@ namespace Client.Envir
                     break;
                 case GridType.Storage:
                     cell = GameScene.Game.StorageBox.Grid.Grid[p.Target.Slot];
+                    break;
+                case GridType.PartsStorage:
+                    cell = GameScene.Game.StorageBox.PartGrid.Grid[p.Target.Slot];
                     break;
                 case GridType.CompanionInventory:
                     cell = GameScene.Game.CompanionBox.InventoryGrid.Grid[p.Target.Slot];
@@ -2237,6 +2277,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.GuildStorage:
                         if (GameScene.Game.Observer) continue;
 
@@ -2293,6 +2336,9 @@ namespace Client.Envir
                         break;
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
                         break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -2353,6 +2399,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                         break;
@@ -2411,6 +2460,9 @@ namespace Client.Envir
                         break;
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
                         break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -2481,6 +2533,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                         break;
@@ -2539,6 +2594,9 @@ namespace Client.Envir
                         break;
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
                         break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -2599,6 +2657,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                         break;
@@ -2657,6 +2718,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                         break;
@@ -2714,6 +2778,9 @@ namespace Client.Envir
                         break;
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
                         break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -2799,6 +2866,9 @@ namespace Client.Envir
                         break;
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
                         break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -3224,6 +3294,9 @@ namespace Client.Envir
                 case GridType.Storage:
                     fromCell = GameScene.Game.StorageBox.Grid.Grid[p.Cell.Slot];
                     break;
+                case GridType.PartsStorage:
+                    fromCell = GameScene.Game.StorageBox.PartGrid.Grid[p.Cell.Slot];
+                    break;
                 /*    case GridType.GuildStorage:
                       fromCell = GameScene.Game.GuildPanel.StorageControl.Grid[p.FromSlot];
                       break;*/
@@ -3347,6 +3420,9 @@ namespace Client.Envir
                     break;
                 case GridType.Storage:
                     grid = GameScene.Game.StorageBox.Grid.Grid;
+                    break;
+                case GridType.PartsStorage:
+                    grid = GameScene.Game.StorageBox.PartGrid.Grid;
                     break;
                 case GridType.GuildStorage:
                     grid = GameScene.Game.GuildBox.StorageGrid.Grid;
@@ -4006,6 +4082,9 @@ namespace Client.Envir
                 case GridType.Storage:
                     grid = GameScene.Game.StorageBox.Grid.Grid;
                     break;
+                case GridType.PartsStorage:
+                    grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                    break;
                 case GridType.CompanionInventory:
                     grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                     break;
@@ -4044,6 +4123,9 @@ namespace Client.Envir
                         break;
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
                         break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -4086,6 +4168,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                         break;
@@ -4126,6 +4211,9 @@ namespace Client.Envir
                         break;
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
                         break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -4168,6 +4256,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                         break;
@@ -4208,6 +4299,9 @@ namespace Client.Envir
                         break;
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
                         break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
@@ -4250,6 +4344,9 @@ namespace Client.Envir
                     case GridType.Storage:
                         grid = GameScene.Game.StorageBox.Grid.Grid;
                         break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
                     case GridType.CompanionInventory:
                         grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
                         break;
@@ -4275,6 +4372,87 @@ namespace Client.Envir
             }
 
             #endregion
+        }
+        public void Process(S.NPCAccessoryRefine p)
+        {
+            if (p.Target != null)
+                p.Links.Add(p.Target);
+            if (p.OreTarget != null)
+                p.Links.Add(p.OreTarget);
+
+            foreach (CellLinkInfo cellLinkInfo in p.Links)
+            {
+                DXItemCell[] grid;
+
+                switch (cellLinkInfo.GridType)
+                {
+                    case GridType.Inventory:
+                        grid = GameScene.Game.InventoryBox.Grid.Grid;
+                        break;
+                    case GridType.Equipment:
+                        grid = GameScene.Game.CharacterBox.Grid;
+                        break;
+                    case GridType.Storage:
+                        grid = GameScene.Game.StorageBox.Grid.Grid;
+                        break;
+                    case GridType.PartsStorage:
+                        grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                        break;
+                    case GridType.CompanionInventory:
+                        grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
+                        break;
+                    case GridType.CompanionEquipment:
+                        grid = GameScene.Game.CompanionBox.EquipmentGrid;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                DXItemCell fromCell = grid[cellLinkInfo.Slot];
+                fromCell.Locked = false;
+            }
+        }
+
+        public void Process(S.ItemAcessoryRefined p)
+        {
+            DXItemCell[] grid;
+
+            switch (p.GridType)
+            {
+                case GridType.Inventory:
+                    grid = GameScene.Game.InventoryBox.Grid.Grid;
+                    break;
+                case GridType.Equipment:
+                    grid = GameScene.Game.CharacterBox.Grid;
+                    break;
+                case GridType.Storage:
+                    grid = GameScene.Game.StorageBox.Grid.Grid;
+                    break;
+                case GridType.PartsStorage:
+                    grid = GameScene.Game.StorageBox.PartGrid.Grid;
+                    break;
+                case GridType.CompanionInventory:
+                    grid = GameScene.Game.CompanionBox.InventoryGrid.Grid;
+                    break;
+                case GridType.CompanionEquipment:
+                    grid = GameScene.Game.CompanionBox.EquipmentGrid;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            DXItemCell fromCell = grid[p.Slot];
+
+            fromCell.Item.AddedStats.Add(p.NewStats);
+
+            if (p.NewStats.Count == 0)
+            {
+                GameScene.Game.ReceiveChat($"Nothing happen to your {fromCell.Item.Info.ItemName}", MessageType.Hint);
+                return;
+            }
+
+
+
+            fromCell.RefreshItem();
         }
     }
 }
